@@ -1,18 +1,34 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DrawingCanvas from '../components/DrawingCanvas';
 import ToolPanel from '../components/ToolPanel';
 import { exportToMSWord, shareViaWeb } from '../utils/ExportUtils';
 import { useAppSelector } from '../hooks/useStore';
-import { ArrowLeft, FileText, Share2 } from 'lucide-react';
+import { ArrowLeft, FileText, Share2, Loader2 } from 'lucide-react';
+import { databases, DATABASE_ID, NOTEBOOKS_COLLECTION_ID } from '../appwriteClient';
+import { Models } from 'appwrite';
 
 const Editor = () => {
   const { notebookId, pageId } = useParams();
   const navigate = useNavigate();
   
-  // Mock title for now
-  const notebookTitle = `Notebook ${notebookId || 'Draft'}`;
+  const [notebook, setNotebook] = useState<Models.Document | null>(null);
+  
+  useEffect(() => {
+    const fetchNotebook = async () => {
+      if (!notebookId || !DATABASE_ID || !NOTEBOOKS_COLLECTION_ID) return;
+      try {
+        const doc = await databases.getDocument(DATABASE_ID, NOTEBOOKS_COLLECTION_ID, notebookId);
+        setNotebook(doc);
+      } catch (e) {
+        console.error("Failed to fetch notebook", e);
+      }
+    };
+    fetchNotebook();
+  }, [notebookId]);
+  
+  const notebookTitle = notebook?.title || `Notebook ${notebookId || 'Draft'}`;
   
   // Extract text content from the current page to export to word
   const pages = useAppSelector(state => state.notebook.pages);
@@ -52,7 +68,10 @@ const Editor = () => {
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={20} className="text-gray-600" />
           </button>
-          <h1 className="text-xl font-bold text-gray-800">Page Editor</h1>
+          <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+            {!notebook && <Loader2 className="animate-spin text-gray-400" size={16} />}
+            {notebookTitle}
+          </h1>
         </div>
         
         <div className="flex items-center gap-3">
@@ -85,7 +104,7 @@ const Editor = () => {
         <div className="flex-1 bg-gray-100 overflow-auto relative flex justify-center p-4 sm:p-8">
           {/* Canvas Wrapper */}
           <div className="bg-white shadow-md ring-1 ring-gray-200 rounded-sm w-full max-w-[800px] aspect-[4/5] sm:aspect-auto sm:h-full">
-            <DrawingCanvas pageId={pageId || 'default-page'} />
+            <DrawingCanvas notebookId={notebookId} pageId={pageId || 'default-page'} />
           </div>
         </div>
       </div>

@@ -3,12 +3,14 @@ import React, { useRef, useEffect } from 'react';
 import { fabric } from 'fabric';
 import { useAppSelector, useAppDispatch } from '../hooks/useStore';
 import { savePageContent } from '../store/notebookSlice';
+import { databases, DATABASE_ID, NOTEBOOKS_COLLECTION_ID } from '../appwriteClient';
 
 interface DrawingCanvasProps {
+  notebookId?: string;
   pageId: string;
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ notebookId, pageId }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
@@ -37,10 +39,48 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     canvas.freeDrawingBrush.width = strokeWidth;
     canvas.freeDrawingBrush.color = color;
     
-    // Event listeners
-    canvas.on('path:created', () => {
+    // Debounce save function
+    let saveTimeout: NodeJS.Timeout;
+    const saveToAppwrite = () => {
+      if (!notebookId || !DATABASE_ID || !NOTEBOOKS_COLLECTION_ID) return;
+      
+      const jsonContent = JSON.stringify(canvas.toJSON());
+      // Still save to Redux just in case
       dispatch(savePageContent({ pageId, content: canvas.toJSON() }));
-    });
+      
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          await databases.updateDocument(DATABASE_ID, NOTEBOOKS_COLLECTION_ID, notebookId, {
+            content: jsonContent,
+            lastEdited: new Date().toISOString()
+          });
+        } catch (e) {
+          console.error('Failed to save to Appwrite:', e);
+        }
+      }, 1000); // 1s debounce
+    };
+
+    // Load from Appwrite on mount
+    const loadFromAppwrite = async () => {
+      if (!notebookId || !DATABASE_ID || !NOTEBOOKS_COLLECTION_ID) return;
+      try {
+        const doc = await databases.getDocument(DATABASE_ID, NOTEBOOKS_COLLECTION_ID, notebookId);
+        if (doc.content) {
+          canvas.loadFromJSON(JSON.parse(doc.content), () => {
+            canvas.renderAll();
+          });
+        }
+      } catch (e) {
+        console.error('Failed to load from Appwrite:', e);
+      }
+    };
+    loadFromAppwrite();
+    
+    // Event listeners
+    canvas.on('path:created', saveToAppwrite);
+    canvas.on('object:modified', saveToAppwrite);
+    canvas.on('object:added', saveToAppwrite);
     
     // Responsive Resize
     const resizeObserver = new ResizeObserver((entries) => {
@@ -59,7 +99,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
       resizeObserver.disconnect();
       canvas.dispose();
     };
-  }, [pageId, color, dispatch, strokeWidth]);
+  }, [notebookId, pageId, color, dispatch, strokeWidth]);
   
   useEffect(() => {
     if (fabricRef.current) {
@@ -108,7 +148,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     
     if (shape) {
       fabricRef.current.add(shape);
-      dispatch(savePageContent({ pageId, content: fabricRef.current.toJSON() }));
+      // object:added event handles the save
     }
   };
   
@@ -124,7 +164,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     });
     
     fabricRef.current.add(textbox);
-    dispatch(savePageContent({ pageId, content: fabricRef.current.toJSON() }));
+    // object:added handles save
   };
   
 
@@ -134,7 +174,19 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     const objects = fabricRef.current.getObjects();
     if (objects.length > 0) {
       fabricRef.current.remove(objects[objects.length - 1]);
+      // The canvas.on('object:modified') or similar isn't triggered by remove() natively
+      // so we manually trigger a save here, or just let object:removed trigger it if we added it.
+      // But we can just use our existing Redux action temporarily for instant UI sync, 
+      // while Appwrite catches up via a manual save call:
+      const jsonContent = JSON.stringify(fabricRef.current.toJSON());
       dispatch(savePageContent({ pageId, content: fabricRef.current.toJSON() }));
+      
+      if (notebookId && DATABASE_ID && NOTEBOOKS_COLLECTION_ID) {
+        databases.updateDocument(DATABASE_ID, NOTEBOOKS_COLLECTION_ID, notebookId, {
+          content: jsonContent,
+          lastEdited: new Date().toISOString()
+        });
+      }
     }
   };
   
@@ -142,7 +194,16 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     if (!fabricRef.current) return;
     fabricRef.current.clear();
     fabricRef.current.setBackgroundColor('#ffffff', () => {});
+    
+    const jsonContent = JSON.stringify(fabricRef.current.toJSON());
     dispatch(savePageContent({ pageId, content: fabricRef.current.toJSON() }));
+    
+    if (notebookId && DATABASE_ID && NOTEBOOKS_COLLECTION_ID) {
+      databases.updateDocument(DATABASE_ID, NOTEBOOKS_COLLECTION_ID, notebookId, {
+        content: jsonContent,
+        lastEdited: new Date().toISOString()
+      });
+    }
   };
   
   return (

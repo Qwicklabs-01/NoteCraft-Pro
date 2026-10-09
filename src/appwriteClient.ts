@@ -1,4 +1,4 @@
-import { Client, Account } from 'appwrite';
+import { Client, Account, Databases } from 'appwrite';
 
 const client = new Client();
 
@@ -8,6 +8,10 @@ client
 
 export { client };
 export const account = new Account(client);
+export const databases = new Databases(client);
+
+export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+export const NOTEBOOKS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_NOTEBOOKS_COLLECTION_ID;
 
 // Ensure ping runs once
 client.ping();
