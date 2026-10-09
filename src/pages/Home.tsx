@@ -2,6 +2,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PenTool, Image as ImageIcon, FileText, Share2, ArrowRight } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import Dashboard from './Dashboard';
 
 const FeatureCard = ({ icon: Icon, title, description, delay }: { icon: React.ElementType, title: string, description: string, delay: number }) => (
   <motion.div
@@ -21,6 +23,13 @@ const FeatureCard = ({ icon: Icon, title, description, delay }: { icon: React.El
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  if (loading) return <div className="h-screen w-full flex items-center justify-center">Loading...</div>;
+
+  if (user) {
+    return <Dashboard />;
+  }
 
   return (
     <div className="min-h-screen bg-[#fafafa] selection:bg-indigo-200">
