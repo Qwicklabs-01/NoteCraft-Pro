@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Book, Clock, MoreVertical, LogOut, Loader2 } from 'lucide-react';
 import { databases, DATABASE_ID, NOTEBOOKS_COLLECTION_ID } from '../appwriteClient';
-import { ID, Query, Models } from 'appwrite';
+import { ID, Query } from 'appwrite';
+import type { Models } from 'appwrite';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();

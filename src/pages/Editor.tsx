@@ -7,7 +7,7 @@ import { exportToMSWord, shareViaWeb } from '../utils/ExportUtils';
 import { useAppSelector } from '../hooks/useStore';
 import { ArrowLeft, FileText, Share2, Loader2 } from 'lucide-react';
 import { databases, DATABASE_ID, NOTEBOOKS_COLLECTION_ID } from '../appwriteClient';
-import { Models } from 'appwrite';
+import type { Models } from 'appwrite';
 
 const Editor = () => {
   const { notebookId, pageId } = useParams();
