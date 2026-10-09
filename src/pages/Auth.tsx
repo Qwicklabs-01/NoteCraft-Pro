@@ -57,10 +57,9 @@ const Auth = () => {
           </button>
 
           {/* Telegram Login Widget Container */}
-          <div 
-            ref={telegramRef}
-            className="flex justify-center items-center w-full h-[50px] bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors [&>iframe]:!w-full [&>iframe]:!max-w-[240px]"
-          ></div>
+          <div className="flex justify-center items-center w-full py-2">
+            <div ref={telegramRef} className="telegram-button-wrapper"></div>
+          </div>
 
           {/* Snapchat button removed for now */}
 
