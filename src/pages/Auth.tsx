@@ -13,7 +13,7 @@ const Auth = () => {
     if (telegramRef.current && !telegramRef.current.hasChildNodes()) {
       const script = document.createElement('script');
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
-      script.setAttribute('data-telegram-login', 'NoteCraftAuthBot');
+      script.setAttribute('data-telegram-login', 'NotecraftAuthBot');
       script.setAttribute('data-size', 'large');
       script.setAttribute('data-radius', '12');
       script.setAttribute('data-auth-url', window.location.origin + '/api/telegram');
