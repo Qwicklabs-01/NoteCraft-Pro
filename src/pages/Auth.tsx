@@ -15,6 +15,7 @@ const Auth = () => {
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
       script.setAttribute('data-telegram-login', 'NoteCraftAuthBot');
       script.setAttribute('data-size', 'large');
+      script.setAttribute('data-radius', '12');
       script.setAttribute('data-auth-url', window.location.origin + '/api/telegram');
       script.setAttribute('data-request-access', 'write');
       script.async = true;
@@ -56,7 +57,10 @@ const Auth = () => {
           </button>
 
           {/* Telegram Login Widget Container */}
-          <div className="flex justify-center w-full" ref={telegramRef}></div>
+          <div 
+            ref={telegramRef}
+            className="flex justify-center items-center w-full h-[50px] bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors [&>iframe]:!w-full [&>iframe]:!max-w-[240px]"
+          ></div>
 
           <button 
             onClick={() => handleOAuthSignIn('snapchat')}
