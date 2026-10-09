@@ -7,11 +7,10 @@ import { savePageContent } from '../store/notebookSlice';
 
 interface DrawingCanvasProps {
   pageId: string;
-  width: number;
-  height: number;
 }
 
-const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId, width, height }) => {
+const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const dispatch = useAppDispatch();
@@ -23,34 +22,51 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId, width, height }) 
   const [isDrawing, setIsDrawing] = useState(false);
   
   useEffect(() => {
-    if (canvasRef.current) {
-      fabricRef.current = new fabric.Canvas(canvasRef.current, {
-        width,
-        height,
-        isDrawingMode: true,
-        backgroundColor: '#ffffff',
-      });
-      
-      const canvas = fabricRef.current;
-      
-      // Set brush properties
-      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-      canvas.freeDrawingBrush.width = strokeWidth;
-      canvas.freeDrawingBrush.color = color;
-      
-      // Event listeners
-      canvas.on('path:created', (e) => {
-        dispatch(savePageContent({ pageId, content: canvas.toJSON() }));
-      });
-      
-      canvas.on('mouse:down', () => setIsDrawing(true));
-      canvas.on('mouse:up', () => setIsDrawing(false));
-      
-      return () => {
-        canvas.dispose();
-      };
-    }
-  }, [pageId, width, height]);
+    if (!canvasRef.current || !containerRef.current) return;
+    
+    // Initialize canvas with container dimensions
+    const container = containerRef.current;
+    
+    fabricRef.current = new fabric.Canvas(canvasRef.current, {
+      width: container.clientWidth,
+      height: container.clientHeight,
+      isDrawingMode: true,
+      backgroundColor: '#ffffff',
+    });
+    
+    const canvas = fabricRef.current;
+    
+    // Set brush properties
+    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush.width = strokeWidth;
+    canvas.freeDrawingBrush.color = color;
+    
+    // Event listeners
+    canvas.on('path:created', (e) => {
+      dispatch(savePageContent({ pageId, content: canvas.toJSON() }));
+    });
+    
+    canvas.on('mouse:down', () => setIsDrawing(true));
+    canvas.on('mouse:up', () => setIsDrawing(false));
+    
+    // Responsive Resize
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (canvas) {
+          canvas.setWidth(entry.contentRect.width);
+          canvas.setHeight(entry.contentRect.height);
+          canvas.renderAll();
+        }
+      }
+    });
+    
+    resizeObserver.observe(container);
+    
+    return () => {
+      resizeObserver.disconnect();
+      canvas.dispose();
+    };
+  }, [pageId]);
   
   useEffect(() => {
     if (fabricRef.current) {
@@ -146,7 +162,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId, width, height }) 
   };
   
   return (
-    <div className="canvas-container">
+    <div className="canvas-container w-full h-full" ref={containerRef}>
       <canvas ref={canvasRef} />
       <div className="canvas-controls">
         <button onClick={() => addShape('rectangle')}>Rectangle</button>

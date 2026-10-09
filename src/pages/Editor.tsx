@@ -82,10 +82,10 @@ const Editor = () => {
         </div>
         
         {/* Center: Canvas Area */}
-        <div className="flex-1 bg-gray-100 overflow-auto relative flex justify-center p-8">
+        <div className="flex-1 bg-gray-100 overflow-auto relative flex justify-center p-4 sm:p-8">
           {/* Canvas Wrapper */}
-          <div className="bg-white shadow-md ring-1 ring-gray-200 rounded-sm" style={{ width: 800, height: 1000 }}>
-            <DrawingCanvas pageId={pageId || 'default-page'} width={800} height={1000} />
+          <div className="bg-white shadow-md ring-1 ring-gray-200 rounded-sm w-full max-w-[800px] aspect-[4/5] sm:aspect-auto sm:h-full">
+            <DrawingCanvas pageId={pageId || 'default-page'} />
           </div>
         </div>
       </div>
