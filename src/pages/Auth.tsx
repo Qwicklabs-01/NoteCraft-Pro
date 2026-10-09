@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { account } from '../appwriteClient';
 import { OAuthProvider } from 'appwrite';
-import { useNavigate } from 'react-router-dom';
+
 
 const Auth = () => {
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const telegramRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,9 +32,13 @@ const Auth = () => {
         window.location.origin, // success url
         window.location.origin  // failure url
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError(String(err));
+      }
     }
   };
 

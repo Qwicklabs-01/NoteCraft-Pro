@@ -1,12 +1,13 @@
 import { Client, Users } from 'node-appwrite';
 import crypto from 'crypto';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { hash, ...data } = req.query;
+  const { hash, ...data } = req.query as Record<string, string>;
 
   // 1. Verify Telegram Hash
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -51,8 +52,8 @@ export default async function handler(req: any, res: any) {
     // We try to fetch the user, if they don't exist we create them.
     try {
       await users.get(userId);
-    } catch (err: any) {
-      if (err.code === 404) {
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'code' in err && (err as { code: number }).code === 404) {
         await users.create(userId, undefined, undefined, undefined, data.first_name + (data.last_name ? ` ${data.last_name}` : ''));
       } else {
         throw err;
@@ -74,8 +75,8 @@ export default async function handler(req: any, res: any) {
         }
       </script>
     `);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Appwrite error:', error);
-    res.status(500).json({ error: 'Failed to create Appwrite token', details: error.message });
+    res.status(500).json({ error: 'Failed to create Appwrite token', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 }

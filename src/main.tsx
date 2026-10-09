@@ -7,9 +7,20 @@ import { registerSW } from 'virtual:pwa-register'
 
 registerSW({ immediate: true })
 
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: {
+        ready: () => void;
+        expand: () => void;
+      };
+    };
+  }
+}
+
 // Initialize Telegram Web App if available
-if ((window as any).Telegram?.WebApp) {
-  const tg = (window as any).Telegram.WebApp;
+if (window.Telegram?.WebApp) {
+  const tg = window.Telegram.WebApp;
   tg.ready();
   tg.expand();
 }
