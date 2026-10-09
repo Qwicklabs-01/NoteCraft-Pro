@@ -32,7 +32,10 @@ const StickyNotesLayer: React.FC = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
       {/* Floating Add Note Button */}
-      <div className="absolute bottom-6 right-6 pointer-events-auto">
+      <div 
+        className="absolute right-6 pointer-events-auto"
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+      >
         <button 
           onClick={addNote}
           className="bg-yellow-300 hover:bg-yellow-400 text-yellow-900 shadow-xl rounded-full p-4 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"

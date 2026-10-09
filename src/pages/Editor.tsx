@@ -47,7 +47,7 @@ const Editor = () => {
   return (
     <div className="flex flex-col h-screen w-full bg-gray-50 overflow-hidden">
       {/* Top Toolbar */}
-      <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 shrink-0">
+      <header className="min-h-[4rem] pt-[env(safe-area-inset-top)] bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 shadow-sm z-10 shrink-0">
         <div className="flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
             <ArrowLeft size={20} className="text-gray-600" />
@@ -75,9 +75,9 @@ const Editor = () => {
       </header>
 
       {/* Main Workspace */}
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Left Side: Tool Panel */}
-        <div className="w-20 sm:w-64 border-r border-gray-200 bg-white shadow-sm z-10 shrink-0 overflow-y-auto">
+      <div className="flex flex-col sm:flex-row flex-1 overflow-hidden relative">
+        {/* Tool Panel (Bottom on Mobile, Left on Desktop) */}
+        <div className="w-full sm:w-64 border-t sm:border-t-0 sm:border-r border-gray-200 bg-white shadow-sm z-10 shrink-0 overflow-y-auto order-last sm:order-first pb-[env(safe-area-inset-bottom)] sm:pb-0 h-48 sm:h-auto">
           <ToolPanel />
         </div>
         

@@ -182,13 +182,49 @@ body {
   position: absolute;
   top: 1rem;
   right: 1rem;
+  left: 1rem;
   display: flex;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   background: rgba(255, 255, 255, 0.9);
   padding: 0.5rem;
   border-radius: 8px;
   box-shadow: var(--shadow);
+  -webkit-overflow-scrolling: touch;
+}
+
+.canvas-controls::-webkit-scrollbar {
+  height: 4px;
+}
+
+.canvas-controls::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+@media (min-width: 640px) {
+  .canvas-controls {
+    left: auto;
+    max-width: 80%;
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+.canvas-controls button {
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  background: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.canvas-controls button:hover {
+  background: #f3f4f6;
 }
 
 .image-editor-modal {
