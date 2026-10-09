@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { account } from '../appwriteClient';
-import { Models } from 'appwrite';
+import type { Models } from 'appwrite';
 
 interface AuthContextType {
   user: Models.User<Models.Preferences> | null;
