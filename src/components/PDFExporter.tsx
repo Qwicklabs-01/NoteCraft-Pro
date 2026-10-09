@@ -1,15 +1,15 @@
-/* eslint-disable */
+
 import React from 'react';
 import jsPDF from 'jspdf';
-import { saveAs } from 'file-saver';
+
 
 interface PDFExporterProps {
-  notebookId: string;
-  pages: any[];
+
+  pages: { content: { objects?: unknown[] } }[];
   title: string;
 }
 
-const PDFExporter: React.FC<PDFExporterProps> = ({ notebookId, pages, title }) => {
+const PDFExporter: React.FC<PDFExporterProps> = ({ pages, title }) => {
   const exportToPDF = async () => {
     const pdf = new jsPDF({
       orientation: 'portrait',
@@ -39,7 +39,7 @@ const PDFExporter: React.FC<PDFExporterProps> = ({ notebookId, pages, title }) =
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           
           // Render all objects from fabric.js
-          pageData.objects.forEach((obj: any) => {
+          pageData.objects.forEach(() => {
             // Render paths, shapes, text, images
             // This is simplified - actual implementation would use fabric.js rendering
           });
@@ -58,7 +58,6 @@ const PDFExporter: React.FC<PDFExporterProps> = ({ notebookId, pages, title }) =
   };
   
   const exportToPNG = async (pageIndex: number) => {
-    const pageData = pages[pageIndex].content;
     const canvas = document.createElement('canvas');
     canvas.width = 1200;
     canvas.height = 1600;

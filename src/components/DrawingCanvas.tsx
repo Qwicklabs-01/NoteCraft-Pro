@@ -1,8 +1,7 @@
-/* eslint-disable */
-import React, { useRef, useEffect, useState } from 'react';
+
+import React, { useRef, useEffect } from 'react';
 import { fabric } from 'fabric';
 import { useAppSelector, useAppDispatch } from '../hooks/useStore';
-import { setCurrentTool, setStrokeWidth, setColor } from '../store/toolSlice';
 import { savePageContent } from '../store/notebookSlice';
 
 interface DrawingCanvasProps {
@@ -18,9 +17,6 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
   const currentTool = useAppSelector(state => state.tool.currentTool);
   const strokeWidth = useAppSelector(state => state.tool.strokeWidth);
   const color = useAppSelector(state => state.tool.color);
-  
-  const [isDrawing, setIsDrawing] = useState(false);
-  
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
     
@@ -42,16 +38,13 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     canvas.freeDrawingBrush.color = color;
     
     // Event listeners
-    canvas.on('path:created', (e) => {
+    canvas.on('path:created', () => {
       dispatch(savePageContent({ pageId, content: canvas.toJSON() }));
     });
     
-    canvas.on('mouse:down', () => setIsDrawing(true));
-    canvas.on('mouse:up', () => setIsDrawing(false));
-    
     // Responsive Resize
     const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
+      for (const entry of entries) {
         if (canvas) {
           canvas.setWidth(entry.contentRect.width);
           canvas.setHeight(entry.contentRect.height);
@@ -66,7 +59,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
       resizeObserver.disconnect();
       canvas.dispose();
     };
-  }, [pageId]);
+  }, [pageId, color, dispatch, strokeWidth]);
   
   useEffect(() => {
     if (fabricRef.current) {
@@ -134,16 +127,7 @@ const DrawingCanvas: React.FC<DrawingCanvasProps> = ({ pageId }) => {
     dispatch(savePageContent({ pageId, content: fabricRef.current.toJSON() }));
   };
   
-  const addImage = (imageUrl: string) => {
-    if (!fabricRef.current) return;
-    
-    fabric.Image.fromURL(imageUrl, (img) => {
-      img.set({ left: 100, top: 100 });
-      img.scaleToWidth(300);
-      fabricRef.current?.add(img);
-      dispatch(savePageContent({ pageId, content: fabricRef.current?.toJSON() }));
-    });
-  };
+
   
   const undo = () => {
     if (!fabricRef.current) return;

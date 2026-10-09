@@ -1,11 +1,18 @@
-/* eslint-disable */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { account } from '../appwriteClient';
+import { Models } from 'appwrite';
 
-const AuthContext = createContext<any>(null);
+interface AuthContextType {
+  user: Models.User<Models.Preferences> | null;
+  setUser: React.Dispatch<React.SetStateAction<Models.User<Models.Preferences> | null>>;
+  loading: boolean;
+  logout: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

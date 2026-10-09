@@ -1,4 +1,4 @@
-/* eslint-disable */
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DrawingCanvas from '../components/DrawingCanvas';
@@ -23,9 +23,9 @@ const Editor = () => {
     let textContent = "My Notebook Content\n\n";
     if (currentPage && currentPage.content && currentPage.content.objects) {
       // Find all text objects in the canvas JSON
-      const textObjects = currentPage.content.objects.filter((obj: any) => obj.type === 'i-text' || obj.type === 'text');
+      const textObjects = currentPage.content.objects.filter((obj) => obj.type === 'i-text' || obj.type === 'text');
       if (textObjects.length > 0) {
-        textContent += textObjects.map((obj: any) => obj.text).join('\n\n');
+        textContent += textObjects.map((obj) => obj.text).join('\n\n');
       } else {
         textContent += "(No text elements found on this canvas. Sketches cannot be exported to text-only Word docs yet.)";
       }

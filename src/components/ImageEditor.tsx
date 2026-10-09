@@ -1,6 +1,6 @@
-/* eslint-disable */
+
 import React, { useRef, useState } from 'react';
-import { Cropper } from 'react-advanced-cropper';
+import { Cropper, CropperRef } from 'react-advanced-cropper';
 import 'react-advanced-cropper/dist/style.css';
 
 interface ImageEditorProps {
@@ -10,7 +10,7 @@ interface ImageEditorProps {
 }
 
 const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onEditComplete, onClose }) => {
-  const cropperRef = useRef<any>(null);
+  const cropperRef = useRef<CropperRef>(null);
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [saturation, setSaturation] = useState(100);

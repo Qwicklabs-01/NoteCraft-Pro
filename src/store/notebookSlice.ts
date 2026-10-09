@@ -1,9 +1,14 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 
+export interface CanvasContent {
+  objects?: { type?: string; text?: string; [key: string]: unknown }[];
+  [key: string]: unknown;
+}
+
 interface NotebookState {
-  pages: { id: string; content: any }[];
+  pages: { id: string; content: CanvasContent | null }[];
 }
 
 const initialState: NotebookState = {
@@ -14,7 +19,7 @@ const notebookSlice = createSlice({
   name: 'notebook',
   initialState,
   reducers: {
-    savePageContent: (state, action: PayloadAction<{ pageId: string; content: any }>) => {
+    savePageContent: (state, action: PayloadAction<{ pageId: string; content: CanvasContent | null }>) => {
       const page = state.pages.find(p => p.id === action.payload.pageId);
       if (page) {
         page.content = action.payload.content;
