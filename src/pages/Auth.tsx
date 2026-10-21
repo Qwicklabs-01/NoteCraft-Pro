@@ -8,6 +8,7 @@ import { PenTool, ArrowRight, User as UserIcon, AlertTriangle, ExternalLink } fr
 
 const Auth: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
+  const [showWidget, setShowWidget] = useState(false);
   const telegramRef = useRef<HTMLDivElement>(null);
   const { user, loginAsGuest, loginWithTelegramUser, isProjectPaused } = useAuth();
   const navigate = useNavigate();
@@ -22,8 +23,9 @@ const Auth: React.FC = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    // Inject the Telegram Login Widget for standard browsers if not in Telegram WebApp
-    if (!tgUser && telegramRef.current && !telegramRef.current.hasChildNodes()) {
+    // Only inject Telegram Login Widget when explicitly shown and not on localhost
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (!tgUser && showWidget && !isLocal && telegramRef.current && !telegramRef.current.hasChildNodes()) {
       const script = document.createElement('script');
       script.src = 'https://telegram.org/js/telegram-widget.js?22';
       script.setAttribute('data-telegram-login', 'NotecraftAuthBot');
@@ -34,7 +36,7 @@ const Auth: React.FC = () => {
       script.async = true;
       telegramRef.current.appendChild(script);
     }
-  }, [tgUser]);
+  }, [tgUser, showWidget]);
 
   const handleOAuthSignIn = (providerName: string) => {
     if (isProjectPaused) {
@@ -134,10 +136,45 @@ const Auth: React.FC = () => {
             <span>Continue with Google</span>
           </button>
 
-          {/* Telegram Login Widget Container for standard browsers */}
+          {/* Open in Telegram App */}
           {!tgUser && (
-            <div className="flex justify-center items-center w-full py-1">
-              <div ref={telegramRef} className="telegram-button-wrapper"></div>
+            <div className="flex flex-col gap-2 w-full">
+              <a
+                href="https://t.me/NotecraftAuthBot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2.5 bg-[#24A1DE] hover:bg-[#1f8fc6] text-white px-6 py-3 rounded-xl font-medium text-sm transition-all shadow-sm active:scale-95 w-full text-center"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.46c.536-.196 1.006.128.832.94z"/>
+                </svg>
+                <span>Open in Telegram</span>
+              </a>
+
+              {/* Optional Web Widget toggle (for custom linked domains) */}
+              <div className="text-center pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setShowWidget(prev => !prev)}
+                  className="text-[11px] text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  {showWidget ? 'Hide Telegram Web Widget' : 'Use Telegram Web Widget'}
+                </button>
+                {showWidget && (
+                  <div className="mt-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                    {window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                        Telegram Widget does not support localhost. Please use &quot;Open in Telegram&quot; or test on production domain.
+                      </p>
+                    ) : (
+                      <>
+                        <div ref={telegramRef} className="telegram-button-wrapper my-1"></div>
+                        <p className="text-[10px] text-gray-400 mt-1">Requires domain linked with @BotFather (/setdomain)</p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
