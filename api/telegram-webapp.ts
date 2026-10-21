@@ -1,5 +1,5 @@
 import { Client, Users } from 'node-appwrite';
-import crypto from 'crypto';
+import { createHmac } from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { initData } = req.body;
+  const { initData } = req.body || {};
 
   if (!initData) {
     return res.status(400).json({ error: 'Missing initData' });
@@ -33,8 +33,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // WebApp verification uses 'WebAppData' as the key prefix
-    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
-    const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+    const secretKey = createHmac('sha256', 'WebAppData').update(botToken).digest();
+    const hmac = createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
 
     if (hmac !== hash) {
       return res.status(401).json({ error: 'Unauthorized: Invalid Telegram hash' });

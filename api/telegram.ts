@@ -1,5 +1,5 @@
 import { Client, Users } from 'node-appwrite';
-import crypto from 'crypto';
+import { createHash, createHmac } from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,15 +15,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: 'Server misconfiguration: No bot token' });
   }
 
-  const secretKey = crypto.createHash('sha256').update(botToken).digest();
-  const dataCheckArr = [];
+  const secretKey = createHash('sha256').update(botToken).digest();
+  const dataCheckArr: string[] = [];
   for (const key in data) {
     dataCheckArr.push(`${key}=${data[key]}`);
   }
   dataCheckArr.sort();
   const dataCheckString = dataCheckArr.join('\n');
   
-  const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+  const hmac = createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
   
   if (hmac !== hash) {
     return res.status(401).json({ error: 'Unauthorized: Invalid hash' });

@@ -13,5 +13,7 @@ export const databases = new Databases(client);
 export const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 export const NOTEBOOKS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_NOTEBOOKS_COLLECTION_ID;
 
-// Ensure ping runs once
-client.ping();
+// Optional ping with error handler
+client.ping().catch(() => {
+  // Appwrite endpoint may be unavailable offline
+});

@@ -1,76 +1,176 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { account } from '../appwriteClient';
-import type { Models } from 'appwrite';
+import { getTelegramWebApp, getTelegramUser, setupTelegramApp } from '../utils/telegram';
+
+export interface UserProfile {
+  $id: string;
+  name: string;
+  email?: string;
+  isTelegram?: boolean;
+  isGuest?: boolean;
+  photoUrl?: string;
+  username?: string;
+}
 
 interface AuthContextType {
-  user: Models.User<Models.Preferences> | null;
-  setUser: React.Dispatch<React.SetStateAction<Models.User<Models.Preferences> | null>>;
+  user: UserProfile | null;
+  setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   loading: boolean;
   logout: () => Promise<void>;
+  loginAsGuest: (customName?: string) => void;
+  loginWithTelegramUser: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const GUEST_STORAGE_KEY = 'notecraft_guest_user';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialise Telegram WebApp environment
+    setupTelegramApp();
+
     const checkSession = async () => {
       try {
-        const session = await account.get();
-        setUser(session);
-        return; // Already logged in
-      } catch (err) {
-        setUser(null);
-      }
-
-      // Check for Telegram WebApp Auto-Login
-      const tg = window.Telegram?.WebApp;
-      if (tg && tg.initData) {
+        // 1. Try Appwrite account session first
         try {
-          // Send the initData to our custom Vercel backend
-          const response = await fetch('/api/telegram-webapp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData: tg.initData })
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            // Create a session in Appwrite using the custom token secret
-            await account.createSession(data.userId, data.secret);
-            // Re-fetch the user session
-            const newSession = await account.get();
-            setUser(newSession);
+          const session = await account.get();
+          if (session) {
+            setUser({
+              $id: session.$id,
+              name: session.name || session.email || 'User',
+              email: session.email,
+              isTelegram: session.$id.startsWith('tg_'),
+            });
+            setLoading(false);
+            return;
           }
-        } catch (tgError) {
-          console.error("Telegram Auto-Login Failed", tgError);
+        } catch {
+          // No active Appwrite session
         }
-      }
 
-      setLoading(false);
+        // 2. Check for Telegram WebApp environment
+        const tg = getTelegramWebApp();
+        const tgUser = getTelegramUser();
+
+        if (tg && tgUser) {
+          // In Telegram WebApp!
+          if (tg.initData) {
+            try {
+              const res = await fetch('/api/telegram-webapp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: tg.initData })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                if (data.userId && data.secret) {
+                  await account.createSession(data.userId, data.secret);
+                  const newSession = await account.get();
+                  setUser({
+                    $id: newSession.$id,
+                    name: newSession.name || tgUser.first_name,
+                    isTelegram: true,
+                    username: tgUser.username,
+                    photoUrl: tgUser.photo_url
+                  });
+                  setLoading(false);
+                  return;
+                }
+              }
+            } catch {
+              // API endpoint might not be available (e.g. static dev)
+            }
+          }
+
+          // Direct Telegram WebApp fallback session
+          setUser({
+            $id: `tg_${tgUser.id}`,
+            name: `${tgUser.first_name}${tgUser.last_name ? ' ' + tgUser.last_name : ''}`,
+            username: tgUser.username,
+            photoUrl: tgUser.photo_url,
+            isTelegram: true,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // 3. Check for saved guest user
+        const savedGuest = localStorage.getItem(GUEST_STORAGE_KEY);
+        if (savedGuest) {
+          try {
+            const parsed = JSON.parse(savedGuest);
+            setUser(parsed);
+            setLoading(false);
+            return;
+          } catch {
+            localStorage.removeItem(GUEST_STORAGE_KEY);
+          }
+        }
+
+        // No session found
+        setUser(null);
+      } catch (err) {
+        console.error('Session check error:', err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
-    
+
     checkSession();
   }, []);
+
+  const loginAsGuest = (customName?: string) => {
+    const guestUser: UserProfile = {
+      $id: 'guest_' + Math.random().toString(36).substring(2, 9),
+      name: customName || 'Creative Guest',
+      isGuest: true,
+    };
+    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(guestUser));
+    setUser(guestUser);
+  };
+
+  const loginWithTelegramUser = () => {
+    const tgUser = getTelegramUser();
+    if (tgUser) {
+      const userObj: UserProfile = {
+        $id: `tg_${tgUser.id}`,
+        name: `${tgUser.first_name}${tgUser.last_name ? ' ' + tgUser.last_name : ''}`,
+        username: tgUser.username,
+        photoUrl: tgUser.photo_url,
+        isTelegram: true,
+      };
+      localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(userObj));
+      setUser(userObj);
+    }
+  };
 
   const logout = async () => {
     try {
       await account.deleteSession('current');
-      setUser(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Ignore if no Appwrite session
     }
+    localStorage.removeItem(GUEST_STORAGE_KEY);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, logout, loginAsGuest, loginWithTelegramUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
-
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+  return context;
+};
