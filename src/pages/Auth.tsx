@@ -4,12 +4,12 @@ import { OAuthProvider } from 'appwrite';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getTelegramUser, triggerHaptic } from '../utils/telegram';
-import { PenTool, ArrowRight, User as UserIcon } from 'lucide-react';
+import { PenTool, ArrowRight, User as UserIcon, AlertTriangle, ExternalLink } from 'lucide-react';
 
 const Auth: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const telegramRef = useRef<HTMLDivElement>(null);
-  const { user, loginAsGuest, loginWithTelegramUser } = useAuth();
+  const { user, loginAsGuest, loginWithTelegramUser, isProjectPaused } = useAuth();
   const navigate = useNavigate();
 
   const tgUser = getTelegramUser();
@@ -37,6 +37,10 @@ const Auth: React.FC = () => {
   }, [tgUser]);
 
   const handleOAuthSignIn = (providerName: string) => {
+    if (isProjectPaused) {
+      setError('Appwrite Cloud project is paused due to inactivity. Please restore it from the Appwrite console, or continue as Guest with local offline storage.');
+      return;
+    }
     try {
       const provider = providerName as OAuthProvider;
       account.createOAuth2Session(
@@ -77,9 +81,29 @@ const Auth: React.FC = () => {
         <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-2 text-center">
           Welcome to NoteCraft
         </h2>
-        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-8 text-center max-w-xs">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-6 text-center max-w-xs">
           Your digital sketchbook & notebook, responsive in both Google and Telegram.
         </p>
+
+        {isProjectPaused && (
+          <div className="w-full mb-5 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 text-xs">
+            <div className="font-bold flex items-center gap-1.5 mb-1.5 text-amber-800 dark:text-amber-300 text-sm">
+              <AlertTriangle size={16} /> Cloud Project Paused
+            </div>
+            <p className="text-amber-700/95 dark:text-amber-300/90 mb-3 leading-relaxed">
+              Your free-tier Appwrite project is currently paused due to 7 days of inactivity. You can use NoteCraft Pro immediately with offline local storage by clicking <strong>&quot;Try as Guest&quot;</strong> below, or resume your project in the Appwrite Console.
+            </p>
+            <a
+              href="https://cloud.appwrite.io/console"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-200 underline hover:no-underline"
+            >
+              <span>Restore Project in Appwrite Console</span>
+              <ExternalLink size={12} />
+            </a>
+          </div>
+        )}
 
         {error && (
           <div className="text-red-600 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 rounded-xl mb-5 text-xs sm:text-sm w-full text-center">

@@ -18,7 +18,9 @@ import {
   Grid,
   FileText,
   Share2,
-  X
+  X,
+  AlertTriangle,
+  ExternalLink
 } from 'lucide-react';
 import { 
   listNotebooks, 
@@ -32,7 +34,7 @@ import { triggerHaptic } from '../utils/telegram';
 import PDFExporter from '../components/PDFExporter';
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isProjectPaused } = useAuth();
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
 
@@ -182,6 +184,29 @@ const Dashboard: React.FC = () => {
 
       {/* Main Workspace Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        {isProjectPaused && (
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <div>
+                <h4 className="font-bold text-sm text-amber-800 dark:text-amber-300">Appwrite Cloud Project is Paused</h4>
+                <p className="text-xs text-amber-700/90 dark:text-amber-300/80 mt-0.5">
+                  Your backend was paused by Appwrite free tier due to 7 days of inactivity. All your notebooks are working smoothly in local offline storage. To resume cloud sync, restore your project in the Appwrite Console.
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://cloud.appwrite.io/console"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shrink-0 transition-all shadow-sm"
+            >
+              <span>Restore Project</span>
+              <ExternalLink size={13} />
+            </a>
+          </div>
+        )}
+
         {/* Banner / Header Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>

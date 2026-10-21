@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { account } from '../appwriteClient';
+import { client, account } from '../appwriteClient';
 import { getTelegramWebApp, getTelegramUser, setupTelegramApp } from '../utils/telegram';
 
 export interface UserProfile {
@@ -17,6 +17,7 @@ interface AuthContextType {
   user: UserProfile | null;
   setUser: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   loading: boolean;
+  isProjectPaused: boolean;
   logout: () => Promise<void>;
   loginAsGuest: (customName?: string) => void;
   loginWithTelegramUser: () => void;
@@ -29,6 +30,7 @@ const GUEST_STORAGE_KEY = 'notecraft_guest_user';
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isProjectPaused, setIsProjectPaused] = useState(false);
 
   useEffect(() => {
     // Initialise Telegram WebApp environment
@@ -49,8 +51,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
             return;
           }
-        } catch {
-          // No active Appwrite session
+        } catch (err: unknown) {
+          const errObj = err as { code?: number; type?: string; message?: string };
+          if (errObj?.code === 403 || errObj?.type === 'project_paused' || String(errObj?.message).toLowerCase().includes('paused')) {
+            setIsProjectPaused(true);
+          } else {
+            // Also check client.ping() in case account.get threw 401 unauthenticated
+            try {
+              await client.ping();
+            } catch (pingErr: unknown) {
+              const pingObj = pingErr as { code?: number; type?: string; message?: string };
+              if (pingObj?.code === 403 || pingObj?.type === 'project_paused' || String(pingObj?.message).toLowerCase().includes('paused')) {
+                setIsProjectPaused(true);
+              }
+            }
+          }
         }
 
         // 2. Check for Telegram WebApp environment
@@ -161,7 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout, loginAsGuest, loginWithTelegramUser }}>
+    <AuthContext.Provider value={{ user, setUser, loading, isProjectPaused, logout, loginAsGuest, loginWithTelegramUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -22,7 +22,7 @@ import { getTelegramWebApp, isTelegramWebApp, triggerHaptic } from '../utils/tel
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isProjectPaused } = useAuth();
   const { theme, setTheme } = useTheme();
   const dispatch = useAppDispatch();
 
@@ -203,6 +203,30 @@ const Settings: React.FC = () => {
           <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-2">
             <Database size={15} /> Cloud & Local Storage
           </h2>
+
+          <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
+            <div>
+              <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Appwrite Cloud Sync</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {isProjectPaused ? 'Paused by Appwrite free tier (7d inactivity)' : 'Connected'}
+              </div>
+            </div>
+            {isProjectPaused ? (
+              <a
+                href="https://cloud.appwrite.io/console"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                Restore in Console <ExternalLink size={12} />
+              </a>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Active
+              </span>
+            )}
+          </div>
 
           <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800">
             <div>
